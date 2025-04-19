@@ -1,29 +1,31 @@
 import { useState } from "react";
+import axios from "axios";
 export default function LoginForm(){
     const [email,setEmail]=useState('');
     const [password,setPassword]=useState('');
+    const [msg,setMsg]=useState('');
     const handleSubmit=(e)=>{
         e.preventDefault();
-        console.log("Email:",email);
-        console.log("Password:",password);
-        setEmail('');
-        setPassword('');
+        try{
+            const res=await axios.post('/api/login',{email,password});
+            const {token,user}=res.data;
+            localStorage.setItem('token',token);
+            setMsg(`Welcome,${user.name} (${user.role})`);
+        }
+        catch(err){
+            setMsg(err.response?.data?.message || 'Login failed');
+        }
     };
     return(
         <div>
-            <h2>Login Form</h2>
+            <h2>Login</h2>
             <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="email">Email:</label>
-                    <input type="email" name="email" id="email" required value={email} onChange={(e)=>setEmail(e.target.value)}/><br />
-                </div>
-                <div>
-                    <label htmlFor="password">Password:</label>
-                    <input type="password" name="password" id="password" required value={password} onChange={(e)=>setPassword(e.target.value)}/><br />
-                </div>
+                    <input value="email" onChange={(e)=>setEmail(e.target.value)} placeholder="Email" required/><br />
+                    <input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} required/><br />
                 <br />
                 <button>Log in</button>
             </form>
+            <p>{msg}</p>
         </div>
     );
 }
