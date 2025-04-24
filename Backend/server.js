@@ -5,7 +5,11 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import Message from './models/Message.js';
+import userRoutes from './routes/userRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+
 dotenv.config();
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -14,14 +18,16 @@ const io = new Server(server, {
     credentials: true
   }
 });
+
 app.use(cors());
 app.use(express.json());
-mongoose.connect('mongodb://localhost:27017/finmap', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+app.use('/api', userRoutes);
+app.use('/api/auth', authRoutes);
+
+mongoose.connect('mongodb://localhost:27017/finmap')
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.error('❌ MongoDB connection failed:', err));
+
 app.get('/api/messages/:userId/:partnerId', async (req, res) => {
   try {
     const { userId, partnerId } = req.params;
@@ -42,18 +48,16 @@ io.on('connection', (socket) => {
 
   socket.on('join', (userId) => {
     socket.join(userId);
-    console.log(`👤 User ${userId} joined their room`);
   });
 
   socket.on('send-message', async ({ senderId, receiverId, text }) => {
     try {
       const message = new Message({ senderId, receiverId, text });
       await message.save();
-
       io.to(receiverId).emit('receive-message', message);
       io.to(senderId).emit('receive-message', message);
     } catch (err) {
-      console.error('❌ Failed to save/send message:', err);
+      console.error('❌ Failed to send message:', err);
     }
   });
 
