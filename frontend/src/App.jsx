@@ -10,6 +10,7 @@ import UserList from './components/chat/UserList';
 import Chat from './components/chat/Chat';
 import Navbar from './components/layout/Navbar';
 import LoanRequestForm from './components/loans/LoanRequestForm';
+import PendingLoans from './components/loans/PendingLoans';
 
 export default function App() {
   return (
@@ -24,7 +25,8 @@ export default function App() {
         <Route path="/borrower-dashboard" element={<ProtectedRoute><BorrowerDashboard /></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute><UserList /></ProtectedRoute>} />
         <Route path="/chat/:partnerId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-<Route path="/request-loan" element={<ProtectedRoute><LoanRequestForm /></ProtectedRoute>} />
+        <Route path="/pending-loans" element={<ProtectedRoute><PendingLoans /></ProtectedRoute>} />
+        <Route path="/request-loan" element={<ProtectedRoute><LoanRequestForm /></ProtectedRoute>} />
       </Routes>
     </div>
   );
