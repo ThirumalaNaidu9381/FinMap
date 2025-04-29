@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import Message from './models/Message.js';
 import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import loanRoutes from './routes/loanRoutes.js';
 
 dotenv.config();
 
@@ -14,7 +15,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:5173',
+    origin: 'http://localhost:5000',
     credentials: true
   }
 });
@@ -23,8 +24,9 @@ app.use(cors());
 app.use(express.json());
 app.use('/api', userRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/loans', loanRoutes);
 
-mongoose.connect('mongodb://localhost:27017/finmap')
+mongoose.connect('mongodb://localhost:5000/finmap')
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.error('❌ MongoDB connection failed:', err));
 
