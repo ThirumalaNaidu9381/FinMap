@@ -1,27 +1,42 @@
-import { set } from "mongoose";
-import {createContext,useContext,useEffect,useState} from "react";
-const AuthContext=createContext();
-export const AuthProvider=({children})=>{
-    const [user,setUser]=useState(null);
-    const [token,setToken]=useState('');
-    useEffect(()=>{
-        const savedToken=localStorage.getItem('token');
-        const savedUser=localStorage.getItem('user');
-        if(savedToken && savedUser){
-            setToken(savedToken);
-            setUser(JSON.parse(savedUser));
-        }
-    },[]);
-    const logout=()=>{
-        setUser(null);
-        setToken('');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-    };
-    return(
-        <AuthContext.Provider value={{user,token,login,logout}}>
-            {children}
-        </AuthContext.Provider>
-    );
+import { createContext, useContext, useEffect, useState } from 'react';
+import axios from 'axios';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(() => {
+    const stored = localStorage.getItem('user');
+    return stored ? JSON.parse(stored) : null;
+  });
+
+  const login = (data) => {
+    setUser(data.user);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    localStorage.setItem('token', data.token);
+  };
+
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token && !user) {
+      axios.get('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then(res => setUser(res.data))
+      .catch(() => logout());
+    }
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
-export const useAuth=()=>useContext(AuthContext);
+
+export const useAuth = () => useContext(AuthContext);

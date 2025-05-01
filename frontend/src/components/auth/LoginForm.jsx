@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
@@ -6,25 +6,19 @@ import { useAuth } from '../../context/AuthContext';
 export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [msg, setMsg] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { user, login } = useAuth();
-
-  useEffect(() => {
-    if (user) {
-      if (user.role === 'lender') navigate('/lender-dashboard');
-      else if (user.role === 'borrower') navigate('/borrower-dashboard');
-    }
-  }, [user]);
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     try {
       const res = await axios.post('/api/auth/login', { email, password });
-      const { token, user } = res.data;
-      login(user, token);
+      login(res.data); // Store user + token
+      navigate('/dashboard'); // Redirect after login
     } catch (err) {
-      setMsg(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message || 'Login failed');
     }
   };
 
@@ -32,11 +26,23 @@ export default function LoginForm() {
     <div>
       <h2>Login</h2>
       <form onSubmit={handleSubmit}>
-        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" /><br />
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" /><br />
-        <button type="submit">Login</button>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        /><br />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        /><br />
+        <button type="submit">Log In</button>
       </form>
-      <p>{msg}</p>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
     </div>
   );
 }
