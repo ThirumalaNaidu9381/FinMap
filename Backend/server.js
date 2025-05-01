@@ -15,18 +15,29 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:5000',
+    origin: 'http://localhost:5173',
     credentials: true
   }
 });
 
 app.use(cors());
 app.use(express.json());
+
+// ✅ CSP fix to allow fonts/styles/scripts
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self' http://localhost:5173 http://localhost:5000; font-src 'self' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src *;"
+  );
+  next();
+});
+
+
 app.use('/api', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/loans', loanRoutes);
 
-mongoose.connect('mongodb://localhost:5000/finmap')
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.error('❌ MongoDB connection failed:', err));
 
@@ -71,4 +82,8 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
+
+app.get('/', (req, res) => {
+  res.send('FinMap API is running ✅');
 });
