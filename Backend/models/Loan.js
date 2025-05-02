@@ -5,7 +5,7 @@ const loanSchema = new mongoose.Schema({
   lenderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   amount: { type: Number, required: true },
   interestRate: { type: Number, required: true },
-  duration: { type: Number, required: true }, // in months
+  duration: { type: Number, required: true },
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   createdAt: { type: Date, default: Date.now }
 });

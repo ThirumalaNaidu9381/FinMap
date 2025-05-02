@@ -1,18 +1,21 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import axios from 'axios';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem('user');
-    return stored ? JSON.parse(stored) : null;
+    try {
+      const stored = localStorage.getItem('user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
   });
 
-  const login = (data) => {
-    setUser(data.user);
-    localStorage.setItem('user', JSON.stringify(data.user));
-    localStorage.setItem('token', data.token);
+  const login = (userData) => {
+    setUser(userData.user);
+    localStorage.setItem('user', JSON.stringify(userData.user));
+    localStorage.setItem('token', userData.token);
   };
 
   const logout = () => {
@@ -22,14 +25,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token && !user) {
-      axios.get('/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then(res => setUser(res.data))
-      .catch(() => logout());
-    }
+    // Add side-effects here if needed
   }, []);
 
   return (
