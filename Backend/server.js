@@ -23,7 +23,6 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
-// ✅ CSP fix to allow fonts/styles/scripts
 app.use((req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
