@@ -8,6 +8,7 @@ import Message from './models/Message.js';
 import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import loanRoutes from './routes/loanRoutes.js';
+import interestRoutes from './routes/interestRoutes.js';
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.use((req, res, next) => {
 app.use('/api', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/loans', loanRoutes);
+app.use('/api/interests', interestRoutes);
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected'))

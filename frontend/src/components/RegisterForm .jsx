@@ -1,47 +1,88 @@
-import { useState,useEffect } from "react";
-import axios from "axios";
-import { useAuth } from "../AuthContext";
-import { useNavigate } from "react-router-dom";
-export default function RegisterForm(){
-    const [formData,setFormData]=useState({name:'',email:'',password:''});
-    const [msg,setMsg]=useState('');
-    const navigate=useNavigate();
-    const {user,login}=useAuth();
-    useEffect(()=>{
-        if (user) {
-           if(user.role==='lender') navigate('/lender-dashboard');
-           else if(user.role==='borrower') navigate('/borrow-dashboard');
-        }
-    },[user]);
-    const handleChange=(e)=>{
-        setForm({...form,[e.target.value]:e.target.value});
-    };
-    const handleSubmit=async(e)=>{
-        e.preventDefault();
-        try{
-            const res=await axios.post('/api/register',formData);
-            const {token,user}=res.data;
-            login(user,token);
-        }
-        catch(err){
-            setMsg(err.response?.data?.message || 'Registration failed');
-        }
-    };
-    return(
-        <div>
-            <h2>Register</h2>
-            <form onSubmit={handleSubmit}>
-                    <input value={formData.name} onChange={(e)=> setFormData({...formData,name: e.target.value})} placeholder="Name"/><br />
-                    <input value={formData.email} onChange={(e)=> setFormData({...formData,email: e.target.value})} placeholder="Email" /><br />
-                    <input type="password" value={form.password} onChange={(e)=> setFormData({...formData,password: e.target.value})} placeholder="Password" /><br />
-                    {/* <select value={role}  onChange={handleSubmit}>
-                        <option value="lender">Lender</option>
-                        <option value="borrower">Borrower</option>
-                    </select> */ */}
-                {/* {/* <br /> */}
-                <button type="submit">Register</button>
-            </form>
-            <p>{msg}</p>
-        </div>
-    );
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
+
+export default function Register() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'borrower',
+  });
+
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    setError('');
+
+    try {
+      const res = await axios.post('/api/auth/register', form);
+      login(res.data);
+      setMessage('✅ Registration successful!');
+      setForm({ name: '', email: '', password: '', role: 'borrower' });
+
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1500);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Registration failed.');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h2>Register</h2>
+
+      <input
+        type="text"
+        name="name"
+        placeholder="Name"
+        value={form.name}
+        onChange={handleChange}
+        required
+      />
+
+      <input
+        type="email"
+        name="email"
+        placeholder="Email"
+        value={form.email}
+        onChange={handleChange}
+        required
+      />
+
+      <input
+        type="password"
+        name="password"
+        placeholder="Password"
+        value={form.password}
+        onChange={handleChange}
+        required
+      />
+
+      <select name="role" value={form.role} onChange={handleChange}>
+        <option value="borrower">Borrower</option>
+        <option value="lender">Lender</option>
+      </select>
+
+      <button type="submit">Register</button>
+
+      {message && <p style={{ color: 'green' }}>{message}</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+    </form>
+  );
 }
