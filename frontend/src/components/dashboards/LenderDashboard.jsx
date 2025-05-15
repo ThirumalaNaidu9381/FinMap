@@ -1,31 +1,69 @@
-import { useAuth } from '../../context/AuthContext';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
 export default function LenderDashboard() {
-  const { user } = useAuth();
-  const [loans, setLoans] = useState([]);
+  const [pendingLoans, setPendingLoans] = useState([]);
+  const [approvedLoans, setApprovedLoans] = useState([]);
 
   useEffect(() => {
-    axios.get('/api/loans/lender').then((res) => setLoans(res.data));
+    const fetchLoans = async () => {
+      try {
+        const [pendingRes, approvedRes] = await Promise.all([
+          axios.get('/api/loans/pending'),
+          axios.get('/api/loans/approved')
+        ]);
+        setPendingLoans(pendingRes.data);
+        setApprovedLoans(approvedRes.data);
+      } catch (err) {
+        console.error('Failed to fetch loans', err);
+      }
+    };
+
+    fetchLoans();
   }, []);
-  
-  useEffect(() => {
-    axios.get(`/api/loans/lender?lenderId=${user._id}`).then((res) => setLoans(res.data));
-  }, [user]);
-  
+
+  const approveLoan = async (id) => {
+    try {
+      await axios.put(`/api/loans/${id}/approve`);
+      setPendingLoans(pendingLoans.filter((loan) => loan._id !== id));
+      const approvedLoan = pendingLoans.find((loan) => loan._id === id);
+      if (approvedLoan) {
+        setApprovedLoans([...approvedLoans, { ...approvedLoan, status: 'approved' }]);
+      }
+    } catch (err) {
+      console.error('Failed to approve loan', err);
+    }
+  };
+
   return (
-    <div>
-      <h2>Welcome Lender {user?.name}</h2>
-      <p>This is your lender dashboard.</p>
-      <h4>Approved/Rejected Loans</h4>
-      <ul>
-        {loans.map((loan) => (
-          <li key={loan._id}>
-            ₹{loan.amount} @ {loan.interestRate}% for {loan.duration} months — <strong>{loan.status}</strong>
-          </li>
-        ))}
-      </ul>
+    <div className="dashboard">
+      <h2>Pending Loan Requests</h2>
+      {pendingLoans.length === 0 ? (
+        <p>No pending loan requests</p>
+      ) : (
+        pendingLoans.map((loan) => (
+          <div key={loan._id} className="card">
+            <p><strong>Borrower:</strong> {loan.borrowerId?.name}</p>
+            <p><strong>Amount:</strong> ₹{loan.amount}</p>
+            <p><strong>Interest Rate:</strong> {loan.interestRate}%</p>
+            <button onClick={() => approveLoan(loan._id)}>Approve</button>
+          </div>
+        ))
+      )}
+
+      <h2 style={{ marginTop: '2rem' }}>Approved Loans</h2>
+      {approvedLoans.length === 0 ? (
+        <p>No approved loans yet</p>
+      ) : (
+        approvedLoans.map((loan) => (
+          <div key={loan._id} className="card">
+            <p><strong>Borrower:</strong> {loan.borrowerId?.name}</p>
+            <p><strong>Amount:</strong> ₹{loan.amount}</p>
+            <p><strong>Interest Rate:</strong> {loan.interestRate}%</p>
+            <p><strong>Status:</strong> Approved</p>
+          </div>
+        ))
+      )}
     </div>
   );
 }

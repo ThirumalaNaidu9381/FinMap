@@ -3,10 +3,16 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
-router.get('/users/:role', async (req, res) => {
+router.get('/:role', async (req, res) => {
   try {
     const { role } = req.params;
+
+    if (!['lender', 'borrower'].includes(role)) {
+      return res.status(400).json({ message: 'Invalid role' });
+    }
+
     const oppositeRole = role === 'lender' ? 'borrower' : 'lender';
+
     const users = await User.find({ role: oppositeRole }).select('name _id');
     res.json(users);
   } catch (err) {

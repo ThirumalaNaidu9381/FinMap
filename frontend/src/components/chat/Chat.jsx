@@ -1,71 +1,90 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { io } from 'socket.io-client';
 import axios from 'axios';
+import './Chat.css';
+
+const socket = io('http://localhost:5000');
 
 export default function Chat() {
+  const { conversationId } = useParams();
   const { user } = useAuth();
-  const { partnerId } = useParams();
-  const [socket, setSocket] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
+  const chatRef = useRef();
 
   useEffect(() => {
-    if (!user) return;
+    const fetchMessages = async () => {
+      try {
+        const res = await axios.get(`/api/messages/${conversationId}`);
+        setMessages(res.data);
+        chatRef.current?.scrollTo(0, chatRef.current.scrollHeight);
+      } catch (err) {
+        console.error('Failed to fetch messages:', err);
+      }
+    };
 
-    const newSocket = io('http://localhost:5000');
-    newSocket.emit('join', user._id);
-    setSocket(newSocket);
+    if (conversationId) {
+      fetchMessages();
+      socket.emit('join-conversation', conversationId);
+    }
 
-    return () => newSocket.disconnect();
-  }, [user]);
+    return () => {
+      socket.emit('leave-conversation', conversationId);
+    };
+  }, [conversationId]);
 
   useEffect(() => {
-    if (!user || !partnerId) return;
+    const handleNewMessage = (msg) => {
+      setMessages((prev) => [...prev, msg]);
+      chatRef.current?.scrollTo(0, chatRef.current.scrollHeight);
+    };
 
-    axios
-      .get(`/api/messages/${user._id}/${partnerId}`)
-      .then((res) => setMessages(res.data))
-      .catch((err) => console.error('Failed to fetch messages', err));
-  }, [user, partnerId]);
+    socket.on('new-message', handleNewMessage);
+    return () => socket.off('new-message', handleNewMessage);
+  }, []);
 
-  useEffect(() => {
-    if (!socket) return;
-    socket.on('receive-message', (message) => {
-      setMessages((prev) => [...prev, message]);
-    });
-  }, [socket]);
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!text.trim()) return;
 
-  const sendMessage = () => {
-    if (text.trim() && socket) {
-      socket.emit('send-message', {
-        senderId: user._id,
-        receiverId: partnerId,
-        text,
-      });
+    const newMessage = {
+      conversationId,
+      senderId: user._id,
+      text,
+    };
+
+    try {
+      await axios.post('/api/messages', newMessage);
+      socket.emit('send-message', newMessage);
       setText('');
+    } catch (err) {
+      console.error('Failed to send message:', err);
     }
   };
 
   return (
-    <div>
-      <h2>Chat</h2>
-      <div style={{ border: '1px solid #ccc', height: '300px', overflowY: 'scroll', marginBottom: '1rem' }}>
-        {messages.map((m, i) => (
-          <div key={i} style={{ padding: '5px', background: m.senderId === user._id ? '#e0ffe0' : '#f0f0f0' }}>
-            {m.text}
+    <div className="chat-wrapper">
+      <div className="chat-header">Chat</div>
+      <div className="chat-messages" ref={chatRef}>
+        {messages.map((msg) => (
+          <div
+            key={msg._id}
+            className={`bubble ${msg.senderId === user._id ? 'sent' : 'received'}`}
+          >
+            {msg.text}
           </div>
         ))}
       </div>
-      <input
-        type="text"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-        placeholder="Type a message"
-      />
-      <button onClick={sendMessage}>Send</button>
+      <form className="chat-input" onSubmit={handleSend}>
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Type a message"
+        />
+        <button type="submit">Send</button>
+      </form>
     </div>
   );
 }

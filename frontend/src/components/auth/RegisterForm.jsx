@@ -1,50 +1,77 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { useAuth } from '../../context/AuthContext';
 
 export default function RegisterForm() {
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'lender' });
-  const [msg, setMsg] = useState('');
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'borrower' });
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { user, login } = useAuth();
 
-  useEffect(() => {
-    if (user) {
-      if (user.role === 'lender') navigate('/lender-dashboard');
-      else if (user.role === 'borrower') navigate('/borrower-dashboard');
-    }
-  }, [user]);
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setMessage('');
+
     try {
-      const res = await axios.post('/api/auth/register', formData);
-      const { token, user } = res.data;
-      login(user, token);
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+
+      setMessage('✅ Registration successful! Redirecting to login...');
+      setForm({ name: '', email: '', password: '', role: 'borrower' });
+
+      setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
-      setMsg(err.response?.data?.message || 'Registration failed');
+      setError(err.message);
     }
   };
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
   return (
-    <div>
+    <form onSubmit={handleSubmit}>
       <h2>Register</h2>
-      <form onSubmit={handleSubmit}>
-        <input name="name" placeholder="Name" onChange={handleChange} value={formData.name} /><br />
-        <input name="email" placeholder="Email" onChange={handleChange} value={formData.email} /><br />
-        <input name="password" type="password" placeholder="Password" onChange={handleChange} value={formData.password} /><br />
-        <select name="role" onChange={handleChange} value={formData.role}>
-          <option value="lender">Lender</option>
-          <option value="borrower">Borrower</option>
-        </select><br />
-        <button type="submit">Register</button>
-      </form>
-      <p>{msg}</p>
-    </div>
+      {message && <p style={{ color: 'green' }}>{message}</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      <input
+        type="text"
+        name="name"
+        value={form.name}
+        onChange={handleChange}
+        placeholder="Name"
+        required
+      />
+      <input
+        type="email"
+        name="email"
+        value={form.email}
+        onChange={handleChange}
+        placeholder="Email"
+        required
+      />
+      <input
+        type="password"
+        name="password"
+        value={form.password}
+        onChange={handleChange}
+        placeholder="Password"
+        required
+      />
+      <select name="role" value={form.role} onChange={handleChange}>
+        <option value="borrower">Borrower</option>
+        <option value="lender">Lender</option>
+      </select>
+      <button type="submit">Register</button>
+    </form>
   );
 }

@@ -1,3 +1,4 @@
+// frontend/src/App.jsx
 import { Routes, Route } from 'react-router-dom';
 import Home from './components/Home';
 import LoginForm from './components/auth/LoginForm';
@@ -16,12 +17,13 @@ import './App.css';
 
 export default function App() {
   return (
-    <div>
+    <>
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/register" element={<RegisterForm />} />
+
         <Route
           path="/dashboard"
           element={
@@ -30,6 +32,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/lender-dashboard"
           element={
@@ -38,6 +41,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/borrower-dashboard"
           element={
@@ -46,6 +50,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/users"
           element={
@@ -54,14 +59,16 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
-          path="/chat/:partnerId"
+          path="/chat/:conversationId"
           element={
             <ProtectedRoute>
               <Chat />
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/pending-loans"
           element={
@@ -70,6 +77,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/request-loan"
           element={
@@ -78,6 +86,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/interests"
           element={
@@ -87,6 +96,6 @@ export default function App() {
           }
         />
       </Routes>
-    </div>
+    </>
   );
 }
