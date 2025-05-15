@@ -4,11 +4,14 @@ import { Server } from 'socket.io';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import Message from './models/Message.js';
-import userRoutes from './routes/userRoutes.js';
+
 import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 import loanRoutes from './routes/loanRoutes.js';
-import interestRoutes from './routes/interestRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
+import conversationRoutes from './routes/conversationRoutes.js';
+
+import Message from './models/Message.js';
 
 dotenv.config();
 
@@ -17,74 +20,52 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: 'http://localhost:5173',
-    credentials: true
-  }
+    credentials: true,
+  },
 });
 
 app.use(cors());
 app.use(express.json());
 
-app.use((req, res, next) => {
-  res.setHeader(
-    'Content-Security-Policy',
-    "default-src 'self' http://localhost:5173 http://localhost:5000; font-src 'self' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src *;"
-  );
-  next();
-});
-
-
-app.use('/api', userRoutes);
+// Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/loans', loanRoutes);
-app.use('/api/interests', interestRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/conversations', conversationRoutes);
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected'))
-  .catch(err => console.error('❌ MongoDB connection failed:', err));
+  .catch((err) => console.error('❌ MongoDB connection failed:', err));
 
-app.get('/api/messages/:userId/:partnerId', async (req, res) => {
-  try {
-    const { userId, partnerId } = req.params;
-    const messages = await Message.find({
-      $or: [
-        { senderId: userId, receiverId: partnerId },
-        { senderId: partnerId, receiverId: userId }
-      ]
-    }).sort({ timestamp: 1 });
-    res.json(messages);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch messages' });
-  }
-});
-
+// Socket.IO logic using conversationId
 io.on('connection', (socket) => {
-  console.log('🟢 A user connected:', socket.id);
+  console.log('🟢 User connected:', socket.id);
 
-  socket.on('join', (userId) => {
-    socket.join(userId);
+  socket.on('join-conversation', (conversationId) => {
+    socket.join(conversationId);
   });
 
-  socket.on('send-message', async ({ senderId, receiverId, text }) => {
+  socket.on('leave-conversation', (conversationId) => {
+    socket.leave(conversationId);
+  });
+
+  socket.on('send-message', async ({ conversationId, senderId, text }) => {
     try {
-      const message = new Message({ senderId, receiverId, text });
-      await message.save();
-      io.to(receiverId).emit('receive-message', message);
-      io.to(senderId).emit('receive-message', message);
+      const message = await Message.create({ conversationId, senderId, text });
+      io.to(conversationId).emit('new-message', message);
     } catch (err) {
-      console.error('❌ Failed to send message:', err);
+      console.error('❌ Error saving message:', err.message);
     }
   });
 
   socket.on('disconnect', () => {
-    console.log('🔴 User disconnected:', socket.id);
+    console.log('🔴 Disconnected:', socket.id);
   });
 });
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
-
-app.get('/', (req, res) => {
-  res.send('FinMap API is running ✅');
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });

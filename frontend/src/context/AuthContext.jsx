@@ -1,16 +1,22 @@
+// frontend/src/context/AuthContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
     try {
-      const stored = localStorage.getItem('user');
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    } catch (err) {
+      console.error('Failed to parse user from localStorage', err);
+      localStorage.removeItem('user');
     }
-  });
+  }, []);
 
   const login = (userData) => {
     setUser(userData.user);
@@ -23,10 +29,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
   };
-
-  useEffect(() => {
-    // Add side-effects here if needed
-  }, []);
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>

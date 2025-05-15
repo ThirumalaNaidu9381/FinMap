@@ -28,6 +28,8 @@ export default function LoanRequestForm() {
         <input type="number" name="amount" placeholder="Amount" onChange={handleChange} value={form.amount} /><br />
         <input type="number" name="interestRate" placeholder="Interest %" onChange={handleChange} value={form.interestRate} /><br />
         <input type="number" name="duration" placeholder="Duration (months)" onChange={handleChange} value={form.duration} /><br />
+        <input type="number" name="interestRate" placeholder="Interest Rate (%)" value={form.interestRate} onChange={handleChange} required/><br />
+
         <button type="submit">Submit Request</button>
       </form>
       <p>{msg}</p>

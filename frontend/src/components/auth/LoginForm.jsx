@@ -1,48 +1,69 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 
-export default function LoginForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const LoginForm = () => {
+  const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
     try {
-      const res = await axios.post('/api/auth/login', { email, password });
-      login(res.data); // Store user + token
-      navigate('/dashboard'); // Redirect after login
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Server returned non-JSON response');
+      }
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      login(data);
+      navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.message || 'Something went wrong');
     }
   };
 
   return (
-    <div>
+    <form onSubmit={handleSubmit}>
       <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        /><br />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        /><br />
-        <button type="submit">Log In</button>
-      </form>
       {error && <p style={{ color: 'red' }}>{error}</p>}
-    </div>
+      <input
+        type="email"
+        name="email"
+        value={form.email}
+        onChange={handleChange}
+        placeholder="Email"
+        required
+      />
+      <input
+        type="password"
+        name="password"
+        value={form.password}
+        onChange={handleChange}
+        placeholder="Password"
+        required
+      />
+      <button type="submit">Login</button>
+    </form>
   );
-}
+};
+
+export default LoginForm;
