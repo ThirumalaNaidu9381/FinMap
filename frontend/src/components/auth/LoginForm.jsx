@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import '../../styles/Login.css';
 
 const LoginForm = () => {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -23,16 +24,8 @@ const LoginForm = () => {
         body: JSON.stringify(form),
       });
 
-      const contentType = res.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Server returned non-JSON response');
-      }
-
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
+      if (!res.ok) throw new Error(data.message || 'Login failed');
 
       login(data);
       navigate('/dashboard');

@@ -1,8 +1,8 @@
-// frontend/src/App.jsx
 import { Routes, Route } from 'react-router-dom';
 import Home from './components/Home';
 import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
+import VerifyOtp from './components/auth/VerifyOtp';
 import LenderDashboard from './components/dashboards/LenderDashboard';
 import BorrowerDashboard from './components/dashboards/BorrowerDashboard';
 import ProtectedRoute from './routes/ProtectedRoute';
@@ -13,7 +13,7 @@ import Navbar from './components/layout/Navbar';
 import LoanRequestForm from './components/loans/LoanRequestForm';
 import PendingLoans from './components/loans/PendingLoans';
 import Interests from './components/Interests';
-import './App.css';
+import './styles/App.css';
 
 export default function App() {
   return (
@@ -23,7 +23,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/register" element={<RegisterForm />} />
-
+        <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route
           path="/dashboard"
           element={
@@ -32,7 +32,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/lender-dashboard"
           element={
@@ -41,7 +40,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/borrower-dashboard"
           element={
@@ -50,7 +48,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/users"
           element={
@@ -59,7 +56,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/chat/:conversationId"
           element={
@@ -68,7 +64,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/pending-loans"
           element={
@@ -77,7 +72,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/request-loan"
           element={
@@ -86,7 +80,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/interests"
           element={

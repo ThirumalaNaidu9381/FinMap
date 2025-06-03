@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import '../styles/Interests.css';
 
 export default function Interests() {
   const { user } = useAuth();

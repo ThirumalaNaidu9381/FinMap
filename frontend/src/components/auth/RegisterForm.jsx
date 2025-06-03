@@ -1,8 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import '../../styles/Register.css';
 
 export default function RegisterForm() {
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'borrower' });
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: 'borrower'
+  });
+
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -29,8 +37,6 @@ export default function RegisterForm() {
       }
 
       setMessage('✅ Registration successful! Redirecting to login...');
-      setForm({ name: '', email: '', password: '', role: 'borrower' });
-
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
       setError(err.message);
@@ -57,6 +63,14 @@ export default function RegisterForm() {
         value={form.email}
         onChange={handleChange}
         placeholder="Email"
+        required
+      />
+      <input
+        type="text"
+        name="phone"
+        value={form.phone}
+        onChange={handleChange}
+        placeholder="Phone number"
         required
       />
       <input

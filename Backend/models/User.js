@@ -13,6 +13,11 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true
     },
+    phone: {
+      type: String,
+      required: true,
+      unique: true
+    },
     password: {
       type: String,
       required: true
@@ -21,10 +26,23 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['lender', 'borrower'],
       required: true
+    },
+    isPhoneVerified: {
+      type: Boolean,
+      default: false
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false
+    },
+    otp: {
+      type: String
+    },
+    otpExpires: {
+      type: Date
     }
   },
   { timestamps: true }
 );
 
-const User = mongoose.model('User', userSchema);
-export default User;
+export default mongoose.model('User', userSchema);
