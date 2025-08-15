@@ -9,3 +9,4 @@ export default defineConfig({
     },
   },
 });
+//VITE_API_URL=https://finmap-1.onrender.com
