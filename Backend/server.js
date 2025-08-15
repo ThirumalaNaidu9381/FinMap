@@ -2,42 +2,54 @@
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
-import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
 import nodemailer from 'nodemailer';
+
+import { connectDB } from './db.js';
 
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import loanRoutes from './routes/loanRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
 import conversationRoutes from './routes/conversationRoutes.js';
-
-import Message from './models/Message.js';
-import Loan from './models/Loan.js';
-import User from './models/User.js';
-import { scheduleReminders } from './utils/reminderScheduler.js';
 import reminderRoutes from './routes/reminderRoutes.js';
 import otpRoutes from './routes/otpRoutes.js';
 import interestRoutes from './routes/interestRoutes.js';
 
-scheduleReminders();
+import Message from './models/Message.js';
+import Loan from './models/Loan.js';
+import { scheduleReminders } from './utils/reminderScheduler.js';
+
+// Load environment variables first
 dotenv.config();
+
+// Connect to MongoDB
+connectDB();
+
+// Schedule loan reminders
+scheduleReminders();
 
 const app = express();
 const server = http.createServer(app);
+
+// Socket.io with dynamic CORS
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:5173',
+    origin: process.env.CLIENT_URL,
     credentials: true,
   },
 });
 
-app.use(cors());
+// Middleware
+app.use(cors({
+  origin: process.env.CLIENT_URL,
+  credentials: true
+}));
 app.use(express.json());
 
-// Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/loans', loanRoutes);
@@ -47,13 +59,7 @@ app.use('/api/reminders', reminderRoutes);
 app.use('/api/otp', otpRoutes);
 app.use('/api/interests', interestRoutes);
 
-// MongoDB Connection
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ MongoDB connected'))
-  .catch((err) => console.error('❌ MongoDB connection failed:', err));
-
-// Socket.IO Logic
+// Socket.IO Events
 io.on('connection', (socket) => {
   console.log('🟢 User connected:', socket.id);
 
@@ -118,7 +124,8 @@ cron.schedule('0 9 * * *', async () => {
   }
 });
 
+// Start server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
