@@ -8,16 +8,22 @@ export default function LoanRequestForm() {
   const [msg, setMsg] = useState('');
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMsg('');
     try {
-      const res = await axios.post('/api/loans/request', { ...form, borrowerId: user._id });
-      setMsg('Loan request submitted successfully');
+      await axios.post('/api/loans/request', {
+        ...form,
+        borrowerId: user._id
+      });
+      setMsg('✅ Loan request submitted successfully');
+      setForm({ amount: '', interestRate: '', duration: '' }); // reset form
     } catch (err) {
-      setMsg('Failed to submit loan request');
+      setMsg('❌ Failed to submit loan request');
     }
   };
 
@@ -25,14 +31,36 @@ export default function LoanRequestForm() {
     <div>
       <h2>Request a Loan</h2>
       <form onSubmit={handleSubmit}>
-        <input type="number" name="amount" placeholder="Amount" onChange={handleChange} value={form.amount} /><br />
-        <input type="number" name="interestRate" placeholder="Interest %" onChange={handleChange} value={form.interestRate} /><br />
-        <input type="number" name="duration" placeholder="Duration (months)" onChange={handleChange} value={form.duration} /><br />
-        <input type="number" name="interestRate" placeholder="Interest Rate (%)" value={form.interestRate} onChange={handleChange} required/><br />
-
+        <input
+          type="number"
+          name="amount"
+          placeholder="Amount"
+          onChange={handleChange}
+          value={form.amount}
+          required
+        />
+        <br />
+        <input
+          type="number"
+          name="interestRate"
+          placeholder="Interest Rate (%)"
+          onChange={handleChange}
+          value={form.interestRate}
+          required
+        />
+        <br />
+        <input
+          type="number"
+          name="duration"
+          placeholder="Duration (months)"
+          onChange={handleChange}
+          value={form.duration}
+          required
+        />
+        <br />
         <button type="submit">Submit Request</button>
       </form>
-      <p>{msg}</p>
+      {msg && <p>{msg}</p>}
     </div>
   );
 }

@@ -3,12 +3,17 @@ import { useNavigate } from 'react-router-dom';
 
 const VerifyOtp = () => {
   const [otp, setOtp] = useState('');
-  const [userId, setUserId] = useState(localStorage.getItem('pendingUserId'));
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const userId = localStorage.getItem('pendingUserId');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!userId) {
+      setError('No user found. Please register again.');
+      return;
+    }
+
     try {
       const res = await fetch('/api/auth/verify-otp', {
         method: 'POST',
@@ -16,10 +21,11 @@ const VerifyOtp = () => {
         body: JSON.stringify({ otp, userId })
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || 'Verification failed');
 
-      alert('Verification successful');
+      alert('Verification successful!');
+      localStorage.removeItem('pendingUserId'); // cleanup
       navigate('/login');
     } catch (err) {
       setError(err.message);

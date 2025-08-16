@@ -1,5 +1,5 @@
 // frontend/src/context/AuthContext.jsx
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 
 const AuthContext = createContext();
 
@@ -14,6 +14,7 @@ export const AuthProvider = ({ children }) => {
 
       if (storedUser && storedToken) {
         const parsedUser = JSON.parse(storedUser);
+
         if (parsedUser?._id && parsedUser?.email) {
           setUser(parsedUser);
           setToken(storedToken);
@@ -22,7 +23,7 @@ export const AuthProvider = ({ children }) => {
         }
       }
     } catch (err) {
-      console.error('❌ Failed to load auth from localStorage:', err);
+      console.error('❌ Failed to load auth from localStorage:', err.message);
       localStorage.removeItem('user');
       localStorage.removeItem('token');
     }
@@ -33,8 +34,10 @@ export const AuthProvider = ({ children }) => {
       console.error('❌ Invalid login payload');
       return;
     }
+
     setUser(userData);
     setToken(authToken);
+
     localStorage.setItem('user', JSON.stringify(userData));
     localStorage.setItem('token', authToken);
   };
@@ -46,11 +49,21 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
   };
 
+  // ✅ useMemo to prevent unnecessary re-renders
+  const value = useMemo(() => ({ user, token, login, logout }), [user, token]);
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+// ✅ Add safety in case context is used outside provider
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

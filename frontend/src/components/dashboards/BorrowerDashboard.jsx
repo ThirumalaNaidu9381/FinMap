@@ -14,23 +14,27 @@ export default function BorrowerDashboard() {
   const [showForm, setShowForm] = useState(false);
   const navigate = useNavigate();
 
+  // Fetch borrower's loans
   useEffect(() => {
     const fetchLoans = async () => {
       try {
         const res = await axios.get(`/api/loans/borrower/${user._id}`);
         setLoans(res.data);
-        console.log('Fetched loans:', res.data);
       } catch (err) {
-        console.error('Failed to fetch loans', err);
+        console.error('Failed to fetch loans', err.response?.data?.message || err.message);
       }
     };
 
-    if (user?._id) fetchLoans();
-  }, [user?._id]);
+    if (user && user._id) {
+      fetchLoans();
+    }
+  }, [user]);
 
+  // Handle loan request form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSuccess('');
+
     try {
       const res = await axios.post('/api/loans', {
         amount,
@@ -38,18 +42,21 @@ export default function BorrowerDashboard() {
         borrowerId: user._id,
         phone,
       });
+
       if (res.status === 201) {
         setSuccess('Loan requested successfully!');
         setAmount('');
         setInterestRate('');
         setPhone('');
         setShowForm(false);
+        setLoans((prev) => [...prev, res.data]); // Optimistic UI update
       }
     } catch (err) {
-      console.error('Loan request failed', err);
+      console.error('Loan request failed', err.response?.data?.message || err.message);
     }
   };
 
+  // Navigate to chat with lender
   const handleChat = (lenderId) => {
     if (lenderId) {
       navigate(`/users?lenderId=${lenderId}`);
@@ -62,15 +69,7 @@ export default function BorrowerDashboard() {
 
       <button
         onClick={() => setShowForm((prev) => !prev)}
-        style={{
-          padding: '0.6rem 1rem',
-          marginBottom: '1rem',
-          backgroundColor: '#007bff',
-          color: 'white',
-          border: 'none',
-          borderRadius: '0.25rem',
-          cursor: 'pointer',
-        }}
+        className="toggle-btn"
       >
         {showForm ? 'Cancel' : 'Add New Request'}
       </button>
@@ -102,7 +101,7 @@ export default function BorrowerDashboard() {
         </form>
       )}
 
-      {success && <p style={{ color: 'green' }}>{success}</p>}
+      {success && <p className="success-text">{success}</p>}
 
       <h2 style={{ marginTop: '2rem' }}>Your Loans</h2>
       {loans.length === 0 ? (
@@ -123,7 +122,7 @@ export default function BorrowerDashboard() {
 
             {loan.status === 'rejected' && loan.rejectionReason && (
               <>
-                <p style={{ color: 'red' }}>
+                <p className="error-text">
                   <strong>Rejection Reason:</strong> {loan.rejectionReason}
                 </p>
                 <p style={{ fontStyle: 'italic' }}>
@@ -143,14 +142,7 @@ export default function BorrowerDashboard() {
                           : loan.rejectedBy
                       )
                     }
-                    style={{
-                      backgroundColor: '#28a745',
-                      color: 'white',
-                      padding: '0.5rem 1rem',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                    }}
+                    className="chat-btn"
                   >
                     Chat with Lender
                   </button>

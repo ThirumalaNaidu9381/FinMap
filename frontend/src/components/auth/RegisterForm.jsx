@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Register.css';
 
+// Use environment variable for backend URL
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+
 export default function RegisterForm() {
   const [form, setForm] = useState({
     name: '',
@@ -25,7 +28,7 @@ export default function RegisterForm() {
     setMessage('');
 
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

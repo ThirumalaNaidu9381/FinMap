@@ -12,24 +12,27 @@ export default function LenderDashboard() {
   useEffect(() => {
     const fetchLoans = async () => {
       if (!user?._id) return;
+
       try {
         const [pendingRes, approvedRes] = await Promise.all([
           axios.get('/api/loans/pending', { params: { lenderId: user._id } }),
           axios.get(`/api/loans/lender/accepted/${user._id}`)
         ]);
-        setPendingLoans(pendingRes.data);
-        setApprovedLoans(approvedRes.data);
+
+        setPendingLoans(Array.isArray(pendingRes.data) ? pendingRes.data : []);
+        setApprovedLoans(Array.isArray(approvedRes.data) ? approvedRes.data : []);
       } catch (err) {
         console.error('Failed to fetch loans', err);
       }
     };
+
     fetchLoans();
-  }, [user]);
+  }, [user?._id]);
 
   const approveLoan = async (id) => {
     try {
       const res = await axios.put(`/api/loans/${id}/approve`);
-      setPendingLoans(pendingLoans.filter((loan) => loan._id !== id));
+      setPendingLoans((prev) => prev.filter((loan) => loan._id !== id));
       setApprovedLoans((prev) => [...prev, res.data]);
     } catch (err) {
       console.error('Failed to approve loan', err);
@@ -39,17 +42,19 @@ export default function LenderDashboard() {
   const rejectLoan = async (id) => {
     const reason = rejectionReasons[id]?.trim();
     if (!reason) return alert('Please enter a rejection reason.');
-    if (!user || !user._id) return alert('User not logged in');
+    if (!user?._id) return alert('User not logged in');
 
     try {
       await axios.put(`/api/loans/${id}/reject`, {
         reason,
         lenderId: user._id
       });
-      setPendingLoans(pendingLoans.filter((loan) => loan._id !== id));
-      const updatedReasons = { ...rejectionReasons };
-      delete updatedReasons[id];
-      setRejectionReasons(updatedReasons);
+      setPendingLoans((prev) => prev.filter((loan) => loan._id !== id));
+      setRejectionReasons((prev) => {
+        const updated = { ...prev };
+        delete updated[id];
+        return updated;
+      });
     } catch (err) {
       console.error('Failed to reject loan', err);
     }
@@ -72,18 +77,18 @@ export default function LenderDashboard() {
       ) : (
         pendingLoans.map((loan) => (
           <div key={loan._id} className="card">
-            <p><strong>Borrower:</strong> {loan.borrowerId?.name}</p>
+            <p><strong>Borrower:</strong> {loan.borrowerId?.name || 'Unknown'}</p>
             <p><strong>Amount:</strong> ₹{loan.amount}</p>
             <p><strong>Interest Rate:</strong> {loan.interestRate}%</p>
             <p><strong>Status:</strong> {loan.status}</p>
 
-            {loan.status === 'rejected' && loan.rejectedBy?._id === user._id && (
+            {loan.status === 'rejected' && loan.rejectedBy?._id === user?._id && (
               <p style={{ color: 'red' }}>
                 <strong>Rejection Reason:</strong> {loan.rejectionReason}
               </p>
             )}
 
-            {(loan.status === 'pending' || loan.rejectedBy?._id !== user._id) && (
+            {(loan.status === 'pending' || loan.rejectedBy?._id !== user?._id) && (
               <>
                 <button onClick={() => approveLoan(loan._id)} style={{ marginRight: '0.5rem' }}>
                   Approve
@@ -93,7 +98,7 @@ export default function LenderDashboard() {
                   placeholder="Rejection reason"
                   value={rejectionReasons[loan._id] || ''}
                   onChange={(e) =>
-                    setRejectionReasons({ ...rejectionReasons, [loan._id]: e.target.value })
+                    setRejectionReasons((prev) => ({ ...prev, [loan._id]: e.target.value }))
                   }
                   style={{ width: '60%', margin: '0.5rem 0' }}
                 />
@@ -115,7 +120,7 @@ export default function LenderDashboard() {
       ) : (
         approvedLoans.map((loan) => (
           <div key={loan._id} className="card">
-            <p><strong>Borrower:</strong> {loan.borrowerId?.name}</p>
+            <p><strong>Borrower:</strong> {loan.borrowerId?.name || 'Unknown'}</p>
             <p><strong>Amount:</strong> ₹{loan.amount}</p>
             <p><strong>Interest Rate:</strong> {loan.interestRate}%</p>
             <p><strong>Status:</strong> Approved</p>

@@ -4,6 +4,9 @@ import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+// Use environment variable or fallback for local dev
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+
 export default function UserList() {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
@@ -12,8 +15,7 @@ export default function UserList() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        // Fetch based on actual logged-in user role
-        const res = await axios.get(`/api/users/${user?.role}`);
+        const res = await axios.get(`${API_BASE_URL}/api/users/${user?.role}`);
         setUsers(res.data);
       } catch (err) {
         console.error('Failed to fetch users:', err);

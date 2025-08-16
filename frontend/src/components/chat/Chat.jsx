@@ -5,7 +5,9 @@ import { io } from 'socket.io-client';
 import axios from 'axios';
 import './Chat.css';
 
-const socket = io('http://localhost:5000');
+// Use environment variable or fallback for development
+const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+const socket = io(SOCKET_URL, { withCredentials: true });
 
 export default function Chat() {
   const { conversationId } = useParams();
@@ -17,7 +19,7 @@ export default function Chat() {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const res = await axios.get(`/api/messages/${conversationId}`);
+        const res = await axios.get(`${SOCKET_URL}/api/messages/${conversationId}`);
         setMessages(res.data);
         chatRef.current?.scrollTo(0, chatRef.current.scrollHeight);
       } catch (err) {
@@ -56,7 +58,7 @@ export default function Chat() {
     };
 
     try {
-      await axios.post('/api/messages', newMessage);
+      await axios.post(`${SOCKET_URL}/api/messages`, newMessage);
       socket.emit('send-message', newMessage);
       setText('');
     } catch (err) {

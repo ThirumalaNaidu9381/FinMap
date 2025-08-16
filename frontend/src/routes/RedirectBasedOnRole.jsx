@@ -7,10 +7,15 @@ export default function RedirectBasedOnRole() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user?.role === 'lender') navigate('/lender-dashboard');
-    else if (user?.role === 'borrower') navigate('/borrower-dashboard');
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    if (user.role === 'lender') navigate('/lender-dashboard');
+    else if (user.role === 'borrower') navigate('/borrower-dashboard');
     else navigate('/login');
-  }, [user]);
+  }, [user, navigate]); // ✅ include navigate in dependencies
 
   return null;
 }
